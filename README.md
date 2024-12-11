@@ -1,6 +1,6 @@
 # GoAlgoCraft
 
 ## TODO
-- [ ] quick sort
+- [x] quick sort
 - [ ] merge sort
 - [ ] skip list
