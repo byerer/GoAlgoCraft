@@ -3,6 +3,7 @@
 
 ## Data Structure
 
+- [x] dsu 并查集
 - [x] monotonic queue
 
 ## TODO
