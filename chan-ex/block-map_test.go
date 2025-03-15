@@ -1,7 +1,6 @@
 package chan_ex
 
 import (
-	"fmt"
 	"sync"
 	"testing"
 	"time"
@@ -13,8 +12,7 @@ func TestBM(t *testing.T) {
 	wg.Add(4)
 	go func() {
 		defer wg.Done()
-		val := m.Get("111")
-		fmt.Println(val)
+		val, _ := m.Get("111", 100*time.Millisecond)
 		if val != "222" {
 			t.Errorf("expect 222, but got %s", val)
 			return
@@ -23,7 +21,7 @@ func TestBM(t *testing.T) {
 
 	go func() {
 		defer wg.Done()
-		val := m.Get("111")
+		val, _ := m.Get("111", 100*time.Millisecond)
 		if val != "222" {
 			t.Errorf("expect 222, but got %s", val)
 			return
@@ -38,11 +36,32 @@ func TestBM(t *testing.T) {
 
 	go func() {
 		defer wg.Done()
-		val := m.Get("111")
+		val, _ := m.Get("111", 100*time.Millisecond)
 		if val != "222" {
 			t.Errorf("expect 222, but got %s", val)
 			return
 		}
+	}()
+	wg.Wait()
+}
+
+func TestTimeout(t *testing.T) {
+	m := NewBm()
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		_, err := m.Get("111", 10*time.Millisecond)
+		if err == nil {
+			t.Errorf("expect timeout, but got nil")
+			return
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		time.Sleep(100 * time.Millisecond)
+		m.Put("111", "222")
 	}()
 	wg.Wait()
 }

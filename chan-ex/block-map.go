@@ -1,6 +1,10 @@
 package chan_ex
 
-import "sync"
+import (
+	"errors"
+	"sync"
+	"time"
+)
 
 type Bm struct {
 	mu sync.Mutex
@@ -19,12 +23,16 @@ type value struct {
 	ch  chan struct{}
 }
 
-func (m *Bm) Get(key string) string {
+func (m *Bm) Get(key string, maxTime time.Duration) (string, error) {
 	m.mu.Lock()
 	if v, ok := m.m[key]; ok {
 		m.mu.Unlock()
-		<-v.ch
-		return v.val
+		select {
+		case <-time.After(maxTime):
+			return "", errors.New("timeout")
+		case <-v.ch:
+			return v.val, nil
+		}
 	}
 	v := &value{
 		val: "",
@@ -32,8 +40,12 @@ func (m *Bm) Get(key string) string {
 	}
 	m.m[key] = v
 	m.mu.Unlock()
-	<-v.ch
-	return v.val
+	select {
+	case <-time.After(maxTime):
+		return "", errors.New("timeout")
+	case <-v.ch:
+		return v.val, nil
+	}
 }
 
 func (m *Bm) Put(key, val string) {
@@ -43,7 +55,6 @@ func (m *Bm) Put(key, val string) {
 		select {
 		case _, open := <-v.ch:
 			if !open {
-				// 如果通道已经关闭，就不再关闭它
 				m.mu.Unlock()
 				return
 			}
