@@ -1,4 +1,4 @@
-package singleflight
+package chan_ex
 
 import "sync"
 
